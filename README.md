@@ -36,9 +36,17 @@ To use AutoSAM, follow these steps:
 2. conda:
 
    ```bash
-   conda create --name autosam python=3.10
-   pip install -r requirements.txt
+   conda env update -n autosam --file environment.yml
 
 3. training:
+   Downloading the prompt encoder checkpoint (trained on ImageNet) will fail so for this talk to me
    ```bash
-   python train.py
+   Cup:
+   python train.py --task=retina --epoches=5 --order=68 -t cup
+
+   Disk:
+   python train.py --task=retina --epoches=5 --order=68 -t cup
+
+4. Annotation (`python auto_annotator.py -i [INPUT_IMAGE_PATH] -c [PROMPT_ENCODER_CHECKPOINT] -o [IMAGE_OUT_PATH]`) E.g.:
+   ```bash
+   python auto_annotator.py -i /dhc/dsets/REFUGE/REFUGE/Test-400/0403/0403.jpg -c /dhc/home/tobias.fiedler/AutoSAM/results/cup/gpu2/net_best.pth -o cup.png
