@@ -211,17 +211,21 @@ class HarDNet(nn.Module):
             if hasattr(torch, 'hub'):
 
                 if arch == 68 and not depth_wise:
+                    id = "hardnet68"
                     checkpoint = 'https://ping-chao.com/hardnet/hardnet68-5d684880.pth'
                 elif arch == 85 and not depth_wise:
+                    id = "hardnet85"
                     checkpoint = 'https://ping-chao.com/hardnet/hardnet85-a28faa00.pth'
                 elif arch == 68 and depth_wise:
+                    id = "hardnet68ds"
                     checkpoint = 'https://ping-chao.com/hardnet/hardnet68ds-632474d2.pth'
                 else:
+                    id = "hardnet39ds"
                     checkpoint = 'https://ping-chao.com/hardnet/hardnet39ds-0e6c6fa9.pth'
 
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=False, map_location=device))
-
+                #self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=False, map_location=device))
+                self.load_state_dict(torch.load("/dhc/home/tobias.fiedler/.cache/torch/hub/PingoLH_Pytorch-HarDNet_master/hardnet68.pth"))
             else:
                 postfix = 'ds' if depth_wise else ''
                 weight_file = '%shardnet%d%s.pth' % (weight_path, arch, postfix)
