@@ -1,0 +1,20 @@
+{
+    "learning_rate": 0.0003,
+    "Batch_size": 3,
+    "epoches": "5",
+    "nW": 0,
+    "nW_eval": 0,
+    "WD": 0.0001,
+    "task": "retina",
+    "depth_wise": false,
+    "order": "68",
+    "Idim": 512,
+    "rotate": 22,
+    "scale1": 0.75,
+    "scale2": 1.25,
+    "target": "cup",
+    "folder": "2",
+    "path": "results/cup/gpu2/net_last.pth",
+    "path_best": "results/cup/gpu2/net_best.pth",
+    "vis_folder": "results/cup/gpu2/vis"
+}
