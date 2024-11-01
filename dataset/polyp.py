@@ -1,12 +1,13 @@
 import os
 from PIL import Image
 import torch.utils.data as data
-import torchvision.transforms as transforms
 import numpy as np
-import random
 import torch
 from dataset.tfs import get_polyp_transform
 import cv2
+from pathlib import Path
+
+POLYP_ROOT_DIR = Path("/dhc/dsets/polyp")
 
 
 class PolypDataset(data.Dataset):
@@ -14,12 +15,24 @@ class PolypDataset(data.Dataset):
     dataloader for polyp segmentation tasks
     """
 
-    def __init__(self, image_root, gt_root, trainsize=352, augmentations=None, train=True, sam_trans=None):
+    def __init__(
+        self,
+        image_root,
+        gt_root,
+        trainsize=352,
+        augmentations=None,
+        train=True,
+        sam_trans=None,
+    ):
         self.trainsize = trainsize
         self.augmentations = augmentations
         # print(self.augmentations)
-        self.images = [image_root + f for f in os.listdir(image_root) if f.endswith('.jpg') or f.endswith('.png')]
-        self.gts = [gt_root + f for f in os.listdir(gt_root) if f.endswith('.png')]
+        self.images = [
+            str(image_root / f)
+            for f in os.listdir(image_root)
+            if f.endswith(".jpg") or f.endswith(".png")
+        ]
+        self.gts = [str(gt_root / f) for f in os.listdir(gt_root) if f.endswith(".png")]
         self.images = sorted(self.images)
         self.gts = sorted(self.gts)
         self.filter_files()
@@ -38,12 +51,18 @@ class PolypDataset(data.Dataset):
         # mask[mask == 255] = 1
         # mask = mask.squeeze()
         original_size = tuple(img.shape[1:3])
-        img, mask = self.sam_trans.apply_image_torch(img), self.sam_trans.apply_image_torch(mask)
+        img, mask = self.sam_trans.apply_image_torch(
+            img
+        ), self.sam_trans.apply_image_torch(mask)
         mask[mask > 0.5] = 1
         mask[mask <= 0.5] = 0
         image_size = tuple(img.shape[1:3])
-        return self.sam_trans.preprocess(img), self.sam_trans.preprocess(mask), torch.Tensor(
-            original_size), torch.Tensor(image_size)
+        return (
+            self.sam_trans.preprocess(img),
+            self.sam_trans.preprocess(mask),
+            torch.Tensor(original_size),
+            torch.Tensor(image_size),
+        )
         # return image, gt
 
     def filter_files(self):
@@ -60,14 +79,14 @@ class PolypDataset(data.Dataset):
         self.gts = gts
 
     def rgb_loader(self, path):
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             img = Image.open(f)
-            return img.convert('RGB')
+            return img.convert("RGB")
 
     def binary_loader(self, path):
         # with open(path, 'rb') as f:
-            # img = Image.open(f)
-            # return img.convert('1')
+        # img = Image.open(f)
+        # return img.convert('1')
         img = cv2.imread(path, 0)
         return img
 
@@ -96,32 +115,64 @@ class PolypDataset(data.Dataset):
 
 def get_polyp_dataset(args, sam_trans=None):
     transform_train, transform_test = get_polyp_transform()
-    image_root = 'polyp/TrainDataset/images/'
-    gt_root = 'polyp/TrainDataset/masks/'
-    ds_train = PolypDataset(image_root, gt_root, augmentations=transform_train, sam_trans=sam_trans)
-    image_root = 'polyp/TestDataset/test/images/'
-    gt_root = 'polyp/TestDataset/test/masks/'
-    ds_test = PolypDataset(image_root, gt_root, train=False, augmentations=transform_test, sam_trans=sam_trans)
+    image_root = POLYP_ROOT_DIR / "TrainDataset/images/"
+    gt_root = POLYP_ROOT_DIR / "TrainDataset/masks/"
+    ds_train = PolypDataset(
+        image_root, gt_root, augmentations=transform_train, sam_trans=sam_trans
+    )
+    image_root = POLYP_ROOT_DIR / "TestDataset/test/images/"
+    gt_root = POLYP_ROOT_DIR / "TestDataset/test/masks/"
+    ds_test = PolypDataset(
+        image_root,
+        gt_root,
+        train=False,
+        augmentations=transform_test,
+        sam_trans=sam_trans,
+    )
     return ds_train, ds_test
 
 
 def get_tests_polyp_dataset(sam_trans):
     transform_train, transform_test = get_polyp_transform()
-    image_root = 'polyp/TestDataset/Kvasir/images/'
-    gt_root = 'polyp/TestDataset/Kvasir/masks/'
-    ds_Kvasir = PolypDataset(image_root, gt_root, augmentations=transform_test, train=False, sam_trans=sam_trans)
+    image_root = POLYP_ROOT_DIR / "TestDataset/Kvasir/images/"
+    gt_root = POLYP_ROOT_DIR / "TestDataset/Kvasir/masks/"
+    ds_Kvasir = PolypDataset(
+        image_root,
+        gt_root,
+        augmentations=transform_test,
+        train=False,
+        sam_trans=sam_trans,
+    )
 
-    image_root = 'polyp/TestDataset/CVC-ClinicDB/images/'
-    gt_root = 'polyp/TestDataset/CVC-ClinicDB/masks/'
-    ds_ClinicDB = PolypDataset(image_root, gt_root, augmentations=transform_test, train=False, sam_trans=sam_trans)
+    image_root = POLYP_ROOT_DIR / "TestDataset/CVC-ClinicDB/images/"
+    gt_root = POLYP_ROOT_DIR / "TestDataset/CVC-ClinicDB/masks/"
+    ds_ClinicDB = PolypDataset(
+        image_root,
+        gt_root,
+        augmentations=transform_test,
+        train=False,
+        sam_trans=sam_trans,
+    )
 
-    image_root = 'polyp/TestDataset/CVC-ColonDB/images/'
-    gt_root = 'polyp/TestDataset/CVC-ColonDB/masks/'
-    ds_ColonDB = PolypDataset(image_root, gt_root, augmentations=transform_test, train=False, sam_trans=sam_trans)
+    image_root = POLYP_ROOT_DIR / "TestDataset/CVC-ColonDB/images/"
+    gt_root = POLYP_ROOT_DIR / "TestDataset/CVC-ColonDB/masks/"
+    ds_ColonDB = PolypDataset(
+        image_root,
+        gt_root,
+        augmentations=transform_test,
+        train=False,
+        sam_trans=sam_trans,
+    )
 
-    image_root = 'polyp/TestDataset/ETIS-LaribPolypDB/images/'
-    gt_root = 'polyp/TestDataset/ETIS-LaribPolypDB/masks/'
-    ds_ETIS = PolypDataset(image_root, gt_root, augmentations=transform_test, train=False, sam_trans=sam_trans)
+    image_root = POLYP_ROOT_DIR / "TestDataset/ETIS-LaribPolypDB/images/"
+    gt_root = POLYP_ROOT_DIR / "TestDataset/ETIS-LaribPolypDB/masks/"
+    ds_ETIS = PolypDataset(
+        image_root,
+        gt_root,
+        augmentations=transform_test,
+        train=False,
+        sam_trans=sam_trans,
+    )
 
     return ds_Kvasir, ds_ClinicDB, ds_ColonDB, ds_ETIS
 
@@ -163,45 +214,53 @@ def get_tests_polyp_dataset(sam_trans):
 #             return img.convert('L')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from tqdm import tqdm
     import argparse
-    from matplotlib import pyplot as plt
-    from segment_anything import SamPredictor, sam_model_registry, SamAutomaticMaskGenerator
+    from segment_anything import sam_model_registry
     from segment_anything.utils.transforms import ResizeLongestSide
 
-    parser = argparse.ArgumentParser(description='Description of your program')
-    parser.add_argument('-Idim', '--Idim', default=512, help='learning_rate', required=False)
-    parser.add_argument('-pSize', '--pSize', default=4, help='learning_rate', required=False)
-    parser.add_argument('-scale1', '--scale1', default=0.75, help='learning_rate', required=False)
-    parser.add_argument('-scale2', '--scale2', default=1.25, help='learning_rate', required=False)
-    parser.add_argument('-rotate', '--rotate', default=20, help='learning_rate', required=False)
+    parser = argparse.ArgumentParser(description="Description of your program")
+    parser.add_argument(
+        "-Idim", "--Idim", default=512, help="learning_rate", required=False
+    )
+    parser.add_argument(
+        "-pSize", "--pSize", default=4, help="learning_rate", required=False
+    )
+    parser.add_argument(
+        "-scale1", "--scale1", default=0.75, help="learning_rate", required=False
+    )
+    parser.add_argument(
+        "-scale2", "--scale2", default=1.25, help="learning_rate", required=False
+    )
+    parser.add_argument(
+        "-rotate", "--rotate", default=20, help="learning_rate", required=False
+    )
     args = vars(parser.parse_args())
 
     sam_args = {
-        'sam_checkpoint': "../cp/sam_vit_b_01ec64.pth",
-        'model_type': "vit_b",
-        'generator_args': {
-            'points_per_side': 8,
-            'pred_iou_thresh': 0.95,
-            'stability_score_thresh': 0.7,
-            'crop_n_layers': 0,
-            'crop_n_points_downscale_factor': 2,
-            'min_mask_region_area': 0,
-            'point_grids': None,
-            'box_nms_thresh': 0.7,
+        "sam_checkpoint": "../cp/sam_vit_b_01ec64.pth",
+        "model_type": "vit_b",
+        "generator_args": {
+            "points_per_side": 8,
+            "pred_iou_thresh": 0.95,
+            "stability_score_thresh": 0.7,
+            "crop_n_layers": 0,
+            "crop_n_points_downscale_factor": 2,
+            "min_mask_region_area": 0,
+            "point_grids": None,
+            "box_nms_thresh": 0.7,
         },
-        'gpu_id': 0,
+        "gpu_id": 0,
     }
-    sam = sam_model_registry[sam_args['model_type']](checkpoint=sam_args['sam_checkpoint'])
-    sam.to(device=torch.device('cuda', sam_args['gpu_id']))
+    sam = sam_model_registry[sam_args["model_type"]](
+        checkpoint=sam_args["sam_checkpoint"]
+    )
+    sam.to(device=torch.device("cuda", sam_args["gpu_id"]))
     sam_trans = ResizeLongestSide(sam.image_encoder.img_size)
 
     ds_train, ds_test = get_polyp_dataset(args, sam_trans=sam_trans)
-    ds = data.DataLoader(dataset=ds_test,
-                         batch_size=1,
-                         shuffle=False,
-                         num_workers=1)
+    ds = data.DataLoader(dataset=ds_test, batch_size=1, shuffle=False, num_workers=1)
     pbar = tqdm(ds)
     mean0_list = []
     mean1_list = []
